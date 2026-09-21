@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+backend/.env
+backend/data.db
+
+# Node
+node_modules/
+frontend/dist/
+frontend/dev-dist/
+*.tsbuildinfo
+
+# Misc
+.DS_Store
