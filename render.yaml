@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: canvas-deadline-tracker
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: CANVAS_BASE_URL
+        value: https://canvas.ualberta.ca
+      - key: VAPID_CLAIM_EMAIL
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
