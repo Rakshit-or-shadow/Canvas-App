@@ -14,9 +14,13 @@ from .models import PushSubscription
 log = logging.getLogger(__name__)
 
 
-def send_to_all(session: Session, title: str, body: str, url: str | None = None) -> int:
-    """Send a push notification to every stored subscription. Returns count sent."""
-    subs = session.exec(select(PushSubscription)).all()
+def send_to_user(
+    session: Session, user_id: int, title: str, body: str, url: str | None = None
+) -> int:
+    """Send a push notification to all of one user's devices. Returns count sent."""
+    subs = session.exec(
+        select(PushSubscription).where(PushSubscription.user_id == user_id)
+    ).all()
     payload = json.dumps({"title": title, "body": body, "url": url or "/"})
     sent = 0
     for sub in subs:

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, AppSettings, Deadline } from "./api";
+import { api, AppSettings, Deadline, getSessionToken, setSessionToken } from "./api";
 import { enablePushNotifications } from "./push";
 
 const LEAD_PRESETS = [
@@ -56,25 +56,56 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    api.getSettings().then((s) => {
-      setSettings(s);
-      if (s.has_token) refreshDeadlines();
-    });
+    if (!getSessionToken()) {
+      // Not signed in — just fetch the public config so push can work later.
+      api.getConfig().then((c) =>
+        setSettings({ has_token: false, lead_minutes: [1440, 60], vapid_public_key: c.vapid_public_key })
+      );
+      return;
+    }
+    api
+      .getSettings()
+      .then((s) => {
+        setSettings(s);
+        if (s.has_token) refreshDeadlines();
+      })
+      .catch(async () => {
+        // Session expired — fall back to logged-out state.
+        setSessionToken(null);
+        const c = await api.getConfig();
+        setSettings({ has_token: false, lead_minutes: [1440, 60], vapid_public_key: c.vapid_public_key });
+      });
   }, [refreshDeadlines]);
 
   const saveToken = async () => {
     setError("");
     setStatus("Verifying token with Canvas…");
     try {
-      const res = await api.setToken(tokenInput);
-      setStatus(`Connected as ${res.profile.name} ✅`);
+      const res = await api.connect(tokenInput);
+      setSessionToken(res.session_token);
       setTokenInput("");
-      setSettings((s) => (s ? { ...s, has_token: true } : s));
+      const s = await api.getSettings();
+      setSettings(s);
+      setStatus(`Connected as ${res.profile.name} ✅`);
       refreshDeadlines();
     } catch (e) {
       setStatus("");
       setError((e as Error).message);
     }
+  };
+
+  const signOut = async () => {
+    try {
+      await api.logout();
+    } catch {
+      /* session may already be dead */
+    }
+    setSessionToken(null);
+    setDeadlines(null);
+    setShowSettings(false);
+    const c = await api.getConfig();
+    setSettings({ has_token: false, lead_minutes: [1440, 60], vapid_public_key: c.vapid_public_key });
+    setStatus("Signed out.");
   };
 
   const toggleLead = async (minutes: number) => {
@@ -144,8 +175,11 @@ export default function App() {
           {needsToken && (
             <p className="hint">
               In Canvas go to <b>Account → Settings → + New Access Token</b>, copy the token and paste it
-              here. It's stored only on your own server.
+              here. Your token is encrypted and only used to fetch your own deadlines.
             </p>
+          )}
+          {!needsToken && settings.profile?.name && (
+            <p className="hint">Signed in as <b>{settings.profile.name}</b></p>
           )}
           <div className="token-row">
             <input
@@ -177,9 +211,18 @@ export default function App() {
             <button onClick={sendTest}>Send test</button>
           </div>
 
-          <a className="ics-link" href="/api/calendar.ics">
+          <a
+            className="ics-link"
+            href={`/api/calendar.ics?key=${encodeURIComponent(getSessionToken() ?? "")}`}
+          >
             📅 Export to Apple Calendar (.ics)
           </a>
+
+          {!needsToken && (
+            <button className="signout" onClick={signOut}>
+              Sign out
+            </button>
+          )}
         </section>
       )}
 

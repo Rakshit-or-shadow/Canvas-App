@@ -13,6 +13,10 @@ export default defineConfig({
       injectManifest: {
         injectionPoint: undefined,
       },
+      devOptions: {
+        enabled: true,
+        type: "module",
+      },
       manifest: {
         name: "Canvas Deadline Tracker",
         short_name: "Deadlines",

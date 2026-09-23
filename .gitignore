@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 backend/.env
 backend/data.db
+backend/.app_secret
 
 # Node
 node_modules/

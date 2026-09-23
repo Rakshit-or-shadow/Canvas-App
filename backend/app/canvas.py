@@ -104,4 +104,8 @@ async def verify_token(token: str) -> dict:
             raise CanvasError("Token rejected by Canvas (401).")
         resp.raise_for_status()
         profile = resp.json()
-        return {"name": profile.get("name"), "primary_email": profile.get("primary_email")}
+        return {
+            "id": profile.get("id"),
+            "name": profile.get("name"),
+            "primary_email": profile.get("primary_email"),
+        }

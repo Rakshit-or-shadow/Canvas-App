@@ -118,6 +118,17 @@ button:disabled { opacity: 0.5; }
   text-decoration: none;
 }
 
+.signout {
+  display: block;
+  margin-top: 14px;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
 .list { list-style: none; padding: 0; }
 
 .item { border-left: 4px solid var(--accent); }
